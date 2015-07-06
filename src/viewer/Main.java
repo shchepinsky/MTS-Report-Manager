@@ -20,6 +20,8 @@ public class Main extends Application {
         // creating and setting Scene using root node of loaded control hierarchy
         primaryStage.setScene(new Scene(root, 32 * 16, 32 * 9));
 
+        primaryStage.setTitle(MainController.MAIN_TITLE_NOFILE);
+
         // show main stage with scene and it's loaded hierarchy of controls
         primaryStage.show();
     }

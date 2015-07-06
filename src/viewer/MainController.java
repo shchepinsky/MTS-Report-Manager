@@ -20,8 +20,8 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 
 public class MainController {
-    static final String MAIN_TITLE_CLOSED = "MTS Report Viewer";
-    static final String MAIN_TITLE_OPENED = "MTS Report Viewer - [ %s ]";
+    public static final String MAIN_TITLE_NOFILE = "MTS Report Viewer";
+    public static final String MAIN_TITLE_OPENED = "MTS Report Viewer - [ %s ]";
 
     ReportModel reportModel = new ReportModel();
 
@@ -44,6 +44,12 @@ public class MainController {
     private MenuItem menuItemFileClose;
     @FXML
     private MenuItem menuItemViewShowColumnButtons;
+    @FXML
+    private MenuItem menuItemViewShowEntitiesWithOverdraftOnly;
+    @FXML
+    private CheckBox checkBoxShowColumnButtons;
+    @FXML
+    private CheckBox checkBoxShowEntitiesWithOverdraftOnly;
     @FXML
     private ChoiceBox<String> goToEntityChoiceBox;
     @FXML
@@ -88,6 +94,9 @@ public class MainController {
         setReportModelReportListener();
 
         goToEntityChoiceBox.getSelectionModel().selectedItemProperty().addListener(c -> {
+            if (goToEntityChoiceBox.getSelectionModel().isEmpty())
+                return;
+
             String[] parts = goToEntityChoiceBox.getSelectionModel().getSelectedItem().split(" : ");
 
             listViewRawReportData.getItems().forEach(s -> {
@@ -109,12 +118,10 @@ public class MainController {
     private void setReportModelReportListener() {
         // set listener to reportModel data change which happens on start, load and close
         reportModel.reportProperty().addListener(observable -> {
-            System.out.println("ReportModel.reportProperty InvalidationListener fired");
-
             // change title of stage
             Stage stage = (Stage) menuBar.getScene().getWindow();
             if (reportModel.getReport() == null) {
-                stage.setTitle(MAIN_TITLE_CLOSED);
+                stage.setTitle(MAIN_TITLE_NOFILE);
             } else {
                 stage.setTitle(String.format(MAIN_TITLE_OPENED, reportModel.getFilename()));
             }
@@ -124,14 +131,32 @@ public class MainController {
             textFieldReportPeriod.setText(reportModel.getPeriod());
             listViewRawReportData.setItems(reportModel.getRawData());
 
-            treeTableViewEntities.getSelectionModel().clearSelection();
-            treeTableViewEntities.getRoot().getChildren().clear();
 
             goToEntityChoiceBox.getItems().clear();
 
-            if (reportModel.getReport() != null) {
-                reportModel.getReport().getPersons().forEach((s, p) -> {
-                    // populate treeViewTable with TreeItems holding PersonModel
+            populateControls();
+
+        });
+    }
+
+    /**
+     * This method iterates through report entities and populate TreeTable
+     * accordingly to filtering preferences
+     */
+    private void populateControls() {
+        treeTableViewEntities.getSelectionModel().clearSelection();
+        treeTableViewEntities.getRoot().getChildren().clear();
+
+        goToEntityChoiceBox.getItems().clear();
+
+        if (reportModel.getReport() != null) {
+            reportModel.getReport().getPersons().forEach((s, p) -> {
+                // populate treeViewTable with TreeItems holding PersonModel
+
+                // if filter checkbox is selected apply overdraft filter
+                if (checkBoxShowEntitiesWithOverdraftOnly.isSelected() && !(p.getTotal() - p.getPlanPrice() > 0)) {
+                    // persons without overdraft filtered out
+                } else {
                     TreeItem<PersonModel> item = new TreeItem<>(new PersonModel(p, reportModel.getReport()));
                     treeTableViewEntities.getRoot().getChildren().add(item);
 
@@ -141,21 +166,22 @@ public class MainController {
                         name += " : " + item.getValue().getEntityName();
 
                     goToEntityChoiceBox.getItems().add(name);
-                });
-            }
+                }
 
-        });
+            });
+        }
     }
 
     private void setEntityTableSelectionListener() {
         // initialize listener to treeView Selection change
-        ListChangeListener<TreeItem<PersonModel>> entirySelectionListener = c -> {
+        ListChangeListener<TreeItem<PersonModel>> entitySelectionListener = c -> {
             // if selection size = 0 then setItems(null) else get sessions of first element selected
             tableViewSessions.setItems(c.getList().size() == 0 ? null : c.getList().get(0).getValue().getSessions());
         };
 
-        treeTableViewEntities.getSelectionModel().getSelectedItems().addListener(entirySelectionListener);
+        treeTableViewEntities.getSelectionModel().getSelectedItems().addListener(entitySelectionListener);
     }
+
 
     private void setSessionTableFactories() {
         tableColumnRemoteNumber.setCellValueFactory(new PropertyValueFactory<>("RemoteNumber"));
@@ -175,14 +201,23 @@ public class MainController {
         treeTableColumnTotal.setCellValueFactory(new TreeItemPropertyValueFactory<>("Total"));
         treeTableColumnContract.setCellValueFactory(new TreeItemPropertyValueFactory<>("Contract"));
         treeTableColumnOverdraft.setCellValueFactory(new TreeItemPropertyValueFactory<>("Overdraft"));
-
     }
 
     @FXML
     void onMenuViewShowColumnButtons(ActionEvent event) {
-        treeTableViewEntities.setTableMenuButtonVisible(!treeTableViewEntities.isTableMenuButtonVisible());
-        tableViewSessions.setTableMenuButtonVisible(!tableViewSessions.isTableMenuButtonVisible());
+        checkBoxShowColumnButtons.setSelected(!checkBoxShowColumnButtons.isSelected());
+
+        treeTableViewEntities.setTableMenuButtonVisible(checkBoxShowColumnButtons.isSelected());
+        tableViewSessions.setTableMenuButtonVisible(checkBoxShowColumnButtons.isSelected());
     }
+
+    @FXML
+    void onMenuViewShowEntitiesWithOverdraftOnly(ActionEvent event) {
+        checkBoxShowEntitiesWithOverdraftOnly.setSelected(!checkBoxShowEntitiesWithOverdraftOnly.isSelected());
+
+        populateControls();
+    }
+
 
     @FXML
     void onMenuFileClose(ActionEvent event) {
@@ -238,7 +273,7 @@ public class MainController {
 
         // create report model and load data using filename provided
         reportModel.loadFromFile(file.getPath());
-        
+
         System.out.println("total number of entities loaded: " + reportModel.getReport().getPersons().size());
     }
 }

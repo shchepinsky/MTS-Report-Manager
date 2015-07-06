@@ -1,12 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import javafx.geometry.*?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-
-<BorderPane minHeight="0.0" minWidth="0.0" prefHeight="300.0" prefWidth="400.0" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="viewer.MainController">
+<BorderPane xmlns:fx="http://javafx.com/fxml/1" minHeight="0.0" minWidth="0.0" prefHeight="300.0" prefWidth="400.0"
+            xmlns="http://javafx.com/javafx/8.0.40" fx:controller="viewer.MainController">
     <center>
         <TabPane>
             <tabs>
@@ -135,7 +133,19 @@
                 </Menu>
                 <Menu mnemonicParsing="false" text="View">
                     <items>
-                        <MenuItem fx:id="menuItemViewShowColumnButtons" mnemonicParsing="false" onAction="#onMenuViewShowColumnButtons" text="Show Columns Buttons" />
+                        <MenuItem fx:id="menuItemViewShowColumnButtons" mnemonicParsing="false"
+                                  onAction="#onMenuViewShowColumnButtons" text="Show Columns Buttons">
+                            <graphic>
+                                <CheckBox fx:id="checkBoxShowColumnButtons" mnemonicParsing="false"/>
+                            </graphic>
+                        </MenuItem>
+                        <MenuItem fx:id="menuItemViewShowEntitiesWithOverdraftOnly" mnemonicParsing="false"
+                                  onAction="#onMenuViewShowEntitiesWithOverdraftOnly"
+                                  text="Show Entities With Overdraft Only">
+                            <graphic>
+                                <CheckBox fx:id="checkBoxShowEntitiesWithOverdraftOnly" mnemonicParsing="false"/>
+                            </graphic>
+                        </MenuItem>
                     </items>
                 </Menu>
                 <Menu mnemonicParsing="false" text="Help">
